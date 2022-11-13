@@ -31,6 +31,7 @@ trans_mat = np.array([[0.8, 0.2], [0.2, 0.8]])
 # Pretend that every sentence we speak only has a total of 5 words,
 # i.e. we independently utter a word from the vocabulary 5 times per sentence
 # we observe the following bag of words (BoW) for 8 sentences:
+# 观测序列
 observations = [["tail", "mouse", "mouse", "food", "mouse"],
         ["food", "mouse", "mouse", "food", "mouse"],
         ["tail", "mouse", "mouse", "tail", "mouse"],
@@ -42,7 +43,8 @@ observations = [["tail", "mouse", "mouse", "food", "mouse"],
         ["tail", "mouse", "mouse", "tail", "mouse"],
         ["fetch", "fetch", "fetch", "fetch", "fetch"]]
 
-# Convert "sentences" to numbers:
+# 将单词转换为数字
+# {'tail': 0, 'fetch': 1, 'mouse': 2, 'food': 3}
 vocab2id = dict(zip(vocabulary, range(len(vocabulary))))
 def sentence2counts(sentence):
     ans = []
@@ -52,28 +54,32 @@ def sentence2counts(sentence):
     return ans
 
 X = []
+# 遍历每一个观测序列
+# row统计的是每个观测序列中["tail", "fetch", "mouse", "food"]的个数。
 for sentence in observations:
     row = sentence2counts(sentence)
     X.append(row)
-
+# X是长为10的列表，每一个元素是一个长为4的列表。
 data = np.array(X, dtype=int)
 
 # pretend this is repeated, so we have more data to learn from:
 lengths = [len(X)]*5
+# sequences={ndarray:(50,4)}是一个可见序列。
 sequences = np.tile(data, (5,1))
 
 
-# Set up model:
+# 构建一个模型
 model = hmm.MultinomialHMM(n_components=len(states),
         n_trials=len(observations[0]),
         n_iter=50,
         init_params='')
-
 model.n_features = len(vocabulary)
 model.startprob_ = start_probs
 model.transmat_ = trans_mat
 model.emissionprob_ = emission_probs
 model.fit(sequences, lengths)
+# 3.Decoding
+# received：ndarray:(50,) 返回的是sequence序列的状态标签，即cat or dog
 logprob, received = model.decode(sequences)
 
 print("Topics discussed:")
